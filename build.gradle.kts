@@ -76,6 +76,9 @@ dependencies {
     // 图片加载 - Coil
     implementation("io.coil-kt:coil:2.5.0")
 
+    // 日志 - Timber
+    implementation("com.jakewharton.timber:timber:5.0.1")
+
     // 数据库 - Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
@@ -100,6 +103,9 @@ dependencies {
 
     // SwipeRefreshLayout
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // 安全存储 - EncryptedSharedPreferences
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // 测试
     testImplementation("junit:junit:4.13.2")

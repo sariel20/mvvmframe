@@ -3,12 +3,11 @@ package com.lc.mvvmframe.data.repository
 import com.lc.mvvmframe.data.local.db.UserDao
 import com.lc.mvvmframe.data.local.sp.PreferencesManager
 import com.lc.mvvmframe.data.remote.api.UserApi
+import com.lc.mvvmframe.core.coroutines.DispatcherProvider
 import com.lc.mvvmframe.domain.model.Resource
 import com.lc.mvvmframe.domain.model.User
 import com.lc.mvvmframe.domain.repository.UserRepository
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,8 +29,9 @@ import javax.inject.Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userApi: UserApi,           // 网络 API
     private val userDao: UserDao,           // 本地数据库 DAO
-    private val preferencesManager: PreferencesManager // SharedPreferences
-) : UserRepository {
+    private val preferencesManager: PreferencesManager, // SharedPreferences
+    private val dispatchers: DispatcherProvider,
+) : BaseRepository(), UserRepository {
 
     /**
      * 用户登录
@@ -42,20 +42,13 @@ class UserRepositoryImpl @Inject constructor(
      * 3. 返回结果
      */
     override suspend fun login(username: String, password: String): Resource<User> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = userApi.login(username, password)
-                if (response.isSuccess && response.data != null) {
-                    // 登录成功，保存用户信息和 Token
-                    val user = response.data!!
-                    saveUserAndToken(user, response.msg)
-                    Resource.Success(user)
-                } else {
-                    Resource.Error(response.errorMsg)
-                }
-            } catch (e: Exception) {
-                Resource.Error(e.message ?: "登录失败", e)
+        return withContext(dispatchers.io) {
+            val result = safeApiCall { userApi.login(username, password) }
+            if (result is Resource.Success) {
+                // 登录成功，保存用户信息和 Token（token 字段示例：当前 API 复用了 msg）
+                saveUserAndToken(result.data, token = null)
             }
+            result
         }
     }
 
@@ -69,31 +62,22 @@ class UserRepositoryImpl @Inject constructor(
      * 4. 更新本地缓存并返回
      */
     override suspend fun getUserInfo(): Resource<User> {
-        return withContext(Dispatchers.IO) {
+        return withContext(dispatchers.io) {
             // 优先检查本地缓存
             val cachedUser = getCachedUser()
             if (cachedUser != null && preferencesManager.isUserCacheValid) {
                 return@withContext Resource.Success(cachedUser)
             }
 
-            // 缓存无效，请求网络
-            try {
-                val response = userApi.getUserInfo()
-                if (response.isSuccess && response.data != null) {
-                    val user = response.data!!
-                    // 更新本地缓存
-                    saveUserToDb(user)
+            // 缓存无效，请求网络；失败则回落缓存
+            when (val net = safeApiCall { userApi.getUserInfo() }) {
+                is Resource.Success -> {
+                    saveUserToDb(net.data)
                     preferencesManager.userCacheTime = System.currentTimeMillis()
-                    Resource.Success(user)
-                } else {
-                    // 网络请求失败，如果有缓存则返回缓存
-                    cachedUser?.let { Resource.Success(it) }
-                        ?: Resource.Error(response.errorMsg)
+                    net
                 }
-            } catch (e: Exception) {
-                // 异常处理，如果有缓存则返回缓存
-                cachedUser?.let { Resource.Success(it) }
-                    ?: Resource.Error(e.message ?: "获取用户信息失败", e)
+                is Resource.Error -> cachedUser?.let { Resource.Success(it) } ?: net
+                is Resource.Loading -> net
             }
         }
     }
@@ -104,19 +88,14 @@ class UserRepositoryImpl @Inject constructor(
      * 强制从网络获取最新数据
      */
     override suspend fun refreshUserInfo(): Resource<User> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = userApi.getUserInfo()
-                if (response.isSuccess && response.data != null) {
-                    val user = response.data!!
-                    saveUserToDb(user)
+        return withContext(dispatchers.io) {
+            when (val net = safeApiCall { userApi.getUserInfo() }) {
+                is Resource.Success -> {
+                    saveUserToDb(net.data)
                     preferencesManager.userCacheTime = System.currentTimeMillis()
-                    Resource.Success(user)
-                } else {
-                    Resource.Error(response.errorMsg)
+                    net
                 }
-            } catch (e: Exception) {
-                Resource.Error(e.message ?: "刷新用户信息失败", e)
+                else -> net
             }
         }
     }
@@ -125,18 +104,13 @@ class UserRepositoryImpl @Inject constructor(
      * 更新用户信息
      */
     override suspend fun updateUser(user: User): Resource<User> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = userApi.updateUser(user)
-                if (response.isSuccess && response.data != null) {
-                    val updatedUser = response.data!!
-                    saveUserToDb(updatedUser)
-                    Resource.Success(updatedUser)
-                } else {
-                    Resource.Error(response.errorMsg)
+        return withContext(dispatchers.io) {
+            when (val net = safeApiCall { userApi.updateUser(user) }) {
+                is Resource.Success -> {
+                    saveUserToDb(net.data)
+                    net
                 }
-            } catch (e: Exception) {
-                Resource.Error(e.message ?: "更新用户信息失败", e)
+                else -> net
             }
         }
     }
@@ -145,7 +119,7 @@ class UserRepositoryImpl @Inject constructor(
      * 退出登录
      */
     override suspend fun logout() {
-        withContext(Dispatchers.IO) {
+        withContext(dispatchers.io) {
             // 清除本地数据库中的用户信息
             userDao.deleteAll()
             // 清除 SharedPreferences 中的登录数据

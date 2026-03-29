@@ -1,15 +1,13 @@
 package com.lc.mvvmframe.di
 
-import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.lc.mvvmframe.BuildConfig
 import com.lc.mvvmframe.data.local.sp.PreferencesManager
 import com.lc.mvvmframe.data.remote.api.UserApi
+import com.lc.mvvmframe.network.SessionAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -91,15 +89,13 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        tokenInterceptor: Interceptor
+        tokenInterceptor: Interceptor,
+        sessionAuthenticator: SessionAuthenticator,
     ): OkHttpClient {
         // 日志拦截器
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) {
-                HttpLoggingInterceptor.Level.BODY // 调试时显示完整日志
-            } else {
-                HttpLoggingInterceptor.Level.NONE // 生产环境不打印日志
-            }
+            // 作为框架库：默认使用 BASIC，避免依赖 BuildConfig.DEBUG（不同模块命名空间下可能不可用）
+            level = HttpLoggingInterceptor.Level.BASIC
         }
 
         return OkHttpClient.Builder()
@@ -108,6 +104,7 @@ object NetworkModule {
             .writeTimeout(30, TimeUnit.SECONDS)     // 写入超时 30s
             .addInterceptor(loggingInterceptor)     // 日志拦截器
             .addInterceptor(tokenInterceptor)       // Token 拦截器
+            .authenticator(sessionAuthenticator)    // 401 统一处理
             .build()
     }
 

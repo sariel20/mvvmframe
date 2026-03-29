@@ -4,10 +4,16 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lc.mvvmframe.domain.error.AppError
 import com.lc.mvvmframe.domain.model.Resource
+import com.lc.mvvmframe.network.NetworkErrorMapper
+import com.lc.mvvmframe.ui.common.Event
+import com.lc.mvvmframe.ui.common.UiEvent
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 基础 ViewModel
@@ -41,6 +47,20 @@ abstract class BaseViewModel<V : IBaseView> : ViewModel() {
      */
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
+
+    /**
+     * 结构化错误（更适合做“可重试/需要登录”等决策）
+     */
+    private val _appError = MutableLiveData<AppError>()
+    val appError: LiveData<AppError> = _appError
+
+    /**
+     * 一次性 UI 事件（Toast、可重试错误等）
+     */
+    private val _uiEvents = MutableLiveData<Event<UiEvent>>()
+    val uiEvents: LiveData<Event<UiEvent>> = _uiEvents
+
+    private val actionRegistry = ConcurrentHashMap<String, () -> Unit>()
 
     /**
      * 空状态
@@ -125,8 +145,27 @@ abstract class BaseViewModel<V : IBaseView> : ViewModel() {
      * @param throwable 异常对象
      */
     protected open fun handleException(throwable: Throwable) {
-        val message = throwable.message ?: "未知错误"
-        showError(message)
+        val mapped = NetworkErrorMapper.fromThrowable(throwable)
+        _appError.postValue(mapped)
+        _uiEvents.postValue(Event(UiEvent.ShowError(mapped)))
+        showError(mapped.message)
+    }
+
+    /**
+     * 发送一个带“重试动作”的错误事件。
+     * Activity/Fragment 统一消费并把按钮点击回调到这里注册的 action。
+     */
+    protected fun emitRetryableError(error: AppError, retry: () -> Unit) {
+        val id = UUID.randomUUID().toString()
+        actionRegistry[id] = retry
+        _appError.postValue(error)
+        _uiEvents.postValue(Event(UiEvent.ShowError(error, retryActionId = id)))
+        showError(error.message)
+    }
+
+    fun runAction(actionId: String) {
+        val action = actionRegistry.remove(actionId) ?: return
+        action.invoke()
     }
 
     /**
@@ -181,8 +220,16 @@ abstract class BaseViewModel<V : IBaseView> : ViewModel() {
             }
             is Resource.Error -> {
                 hideLoading()
-                onError?.invoke(result.message)
-                showError(result.message)
+                val mapped = result.exception?.let { NetworkErrorMapper.fromThrowable(it) }
+                if (mapped != null) {
+                    _appError.postValue(mapped)
+                    _uiEvents.postValue(Event(UiEvent.ShowError(mapped)))
+                    onError?.invoke(mapped.message)
+                    showError(mapped.message)
+                } else {
+                    onError?.invoke(result.message)
+                    showError(result.message)
+                }
             }
         }
     }

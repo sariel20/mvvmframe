@@ -6,6 +6,8 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
+import com.lc.mvvmframe.core.crash.CrashHandler
+import timber.log.Timber
 
 /**
  * MVVM 框架 Application 基类
@@ -34,6 +36,8 @@ open class MvvmFrameApp : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         // 可以在此初始化全局配置，如日志、崩溃监控等
+        Timber.plant(Timber.DebugTree())
+        CrashHandler.install()
     }
 
     /**

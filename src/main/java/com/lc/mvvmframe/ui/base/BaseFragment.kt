@@ -6,10 +6,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.viewbinding.ViewBinding
 import com.google.android.material.snackbar.Snackbar
-import java.lang.ref.WeakReference
+import com.lc.mvvmframe.core.session.SessionEvent
+import com.lc.mvvmframe.core.session.SessionManager
+import com.lc.mvvmframe.di.SessionEntryPoint
+import com.lc.mvvmframe.ui.common.Event
+import com.lc.mvvmframe.ui.common.UiEvent
+import com.lc.mvvmframe.ui.widget.StateLayout
+import dagger.hilt.android.EntryPointAccessors
 
 /**
  * 基础 Fragment
@@ -73,6 +78,11 @@ abstract class BaseFragment<VB : ViewBinding, VM : BaseViewModel<IBaseView>> : F
     protected var contentViewRef: View? = null
 
     /**
+     * 可选：使用 StateLayout 承载多状态页面
+     */
+    protected var stateLayout: StateLayout? = null
+
+    /**
      * 创建 ViewBinding
      *
      * @param inflater LayoutInflater
@@ -132,6 +142,27 @@ abstract class BaseFragment<VB : ViewBinding, VM : BaseViewModel<IBaseView>> : F
 
         // 观察 ViewModel 状态
         observeViewModel()
+
+        // 观察会话事件（如 401 导致的登录失效）
+        observeSessionEvents()
+    }
+
+    protected open fun onSessionExpired() {
+        // 默认不做导航，由业务层自行处理（比如跳转登录页、清空栈等）
+    }
+
+    private fun observeSessionEvents() {
+        val entryPoint = EntryPointAccessors.fromApplication(
+            requireContext().applicationContext,
+            SessionEntryPoint::class.java
+        )
+        val sessionManager: SessionManager = entryPoint.sessionManager()
+        sessionManager.events.observe(viewLifecycleOwner) { event: Event<SessionEvent> ->
+            when (event.getContentIfNotHandled()) {
+                SessionEvent.SessionExpired -> onSessionExpired()
+                null -> Unit
+            }
+        }
     }
 
     /**
@@ -152,6 +183,23 @@ abstract class BaseFragment<VB : ViewBinding, VM : BaseViewModel<IBaseView>> : F
             message?.let { showError(it) }
         }
 
+        // 观察一次性 UI 事件（包含重试回调）
+        viewModel.uiEvents.observe(viewLifecycleOwner) { event: Event<UiEvent> ->
+            when (val e = event.getContentIfNotHandled()) {
+                is UiEvent.ShowError -> {
+                    val rootView = view ?: return@observe
+                    val hasRetry = e.retryActionId != null
+                    Snackbar.make(rootView, e.error.message, Snackbar.LENGTH_LONG)
+                        .setAction(if (hasRetry) "重试" else "关闭") {
+                            e.retryActionId?.let { viewModel.runAction(it) }
+                        }
+                        .show()
+                }
+                is UiEvent.ShowToast -> showToast(e.message)
+                null -> Unit
+            }
+        }
+
         // 观察空状态
         viewModel.empty.observe(viewLifecycleOwner) { message ->
             if (message != null) {
@@ -170,18 +218,22 @@ abstract class BaseFragment<VB : ViewBinding, VM : BaseViewModel<IBaseView>> : F
     // ==================== IBaseView 实现 ====================
 
     override fun showLoading(message: String?) {
-        loadingView?.visibility = View.VISIBLE
-        contentViewRef?.visibility = View.GONE
-        emptyView?.visibility = View.GONE
+        stateLayout?.showLoading() ?: run {
+            loadingView?.visibility = View.VISIBLE
+            contentViewRef?.visibility = View.GONE
+            emptyView?.visibility = View.GONE
+        }
     }
 
     override fun hideLoading() {
-        loadingView?.visibility = View.GONE
-        // 根据是否有空状态显示内容或空状态
-        if (emptyView?.visibility == View.VISIBLE) {
-            contentViewRef?.visibility = View.GONE
-        } else {
-            contentViewRef?.visibility = View.VISIBLE
+        stateLayout?.showContent() ?: run {
+            loadingView?.visibility = View.GONE
+            // 根据是否有空状态显示内容或空状态
+            if (emptyView?.visibility == View.VISIBLE) {
+                contentViewRef?.visibility = View.GONE
+            } else {
+                contentViewRef?.visibility = View.VISIBLE
+            }
         }
     }
 
@@ -198,8 +250,10 @@ abstract class BaseFragment<VB : ViewBinding, VM : BaseViewModel<IBaseView>> : F
     }
 
     override fun showEmpty(message: String, icon: Int?) {
-        emptyView?.visibility = View.VISIBLE
-        contentViewRef?.visibility = View.GONE
+        stateLayout?.showEmpty(message) ?: run {
+            emptyView?.visibility = View.VISIBLE
+            contentViewRef?.visibility = View.GONE
+        }
     }
 
     override fun showToast(message: String) {
@@ -229,5 +283,13 @@ abstract class BaseFragment<VB : ViewBinding, VM : BaseViewModel<IBaseView>> : F
      */
     protected fun bindContentView(view: View) {
         this.contentViewRef = view
+    }
+
+    /**
+     * 绑定 StateLayout（推荐）。绑定后 showLoading/showEmpty/showError 会优先走 StateLayout。
+     */
+    protected fun bindStateLayout(layout: StateLayout, onRetry: (() -> Unit)? = null) {
+        stateLayout = layout
+        stateLayout?.setOnRetry(onRetry)
     }
 }
