@@ -14,11 +14,11 @@ android {
         targetSdk = 34
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
 
-        // Room schema 输出目录
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
-        }
+    // Room schema 输出目录配置移至 android 块根部，正确使用 ksp 扩展
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
 
     buildTypes {
@@ -32,6 +32,8 @@ android {
     }
 
     compileOptions {
+        // 开启 API 脱糖
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -48,6 +50,9 @@ android {
 }
 
 dependencies {
+    // API 脱糖依赖 (使用较新版本)
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+
     // AndroidX 基础
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
