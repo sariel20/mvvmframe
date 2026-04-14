@@ -10,7 +10,7 @@ import com.google.gson.annotations.SerializedName
  * 使用 @Entity 注解标记为 Room 数据库实体表
  * 同时作为领域模型和数据库实体使用
  *
- * @author 小龙虾
+ * @author Cheng
  */
 @Entity(tableName = "users")
 data class User(

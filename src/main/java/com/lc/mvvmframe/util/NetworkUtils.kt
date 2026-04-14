@@ -7,7 +7,7 @@ import android.net.NetworkCapabilities
 /**
  * 网络工具类
  *
- * @author 小龙虾
+ * @author Cheng
  */
 object NetworkUtils {
 

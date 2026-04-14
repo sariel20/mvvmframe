@@ -26,7 +26,7 @@ import javax.inject.Singleton
  * - Gson
  * - API 接口
  *
- * @author 小龙虾
+ * @author Cheng
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -84,7 +84,7 @@ object NetworkModule {
      * - 日志拦截器（仅 debug 模式）
      * - Token 拦截器
      *
-     * @author 小龙虾
+     * @author Cheng
      */
     @Provides
     @Singleton
@@ -116,7 +116,7 @@ object NetworkModule {
      * - Gson 转换器
      * - OkHttpClient
      *
-     * @author 小龙虾
+     * @author Cheng
      */
     @Provides
     @Singleton

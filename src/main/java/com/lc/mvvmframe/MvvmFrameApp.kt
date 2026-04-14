@@ -17,7 +17,7 @@ import timber.log.Timber
  *
  * 注意：库模块不需 @HiltAndroidApp，请在 app 模块的 Application 类上添加
  *
- * @author 小龙虾
+ * @author Cheng
  * @created 2024/01/01
  */
 open class MvvmFrameApp : Application(), ImageLoaderFactory {

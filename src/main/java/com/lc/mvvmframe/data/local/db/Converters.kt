@@ -14,7 +14,7 @@ import com.google.gson.reflect.TypeToken
  *
  * 使用 Gson 序列化/反序列化
  *
- * @author 小龙虾
+ * @author Cheng
  */
 class Converters {
 

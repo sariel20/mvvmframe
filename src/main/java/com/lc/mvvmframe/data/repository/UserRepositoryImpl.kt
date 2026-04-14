@@ -23,7 +23,7 @@ import javax.inject.Singleton
  * 使用 @Singleton 注解确保全局单例
  * 使用 @Inject 注解让 Hilt 自动注入依赖
  *
- * @author 小龙虾
+ * @author Cheng
  */
 @Singleton
 class UserRepositoryImpl @Inject constructor(

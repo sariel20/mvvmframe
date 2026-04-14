@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.Flow
  *
  * 采用接口分离原则，便于单元测试时使用 Mock
  *
- * @author 小龙虾
+ * @author Cheng
  */
 interface UserRepository {
 

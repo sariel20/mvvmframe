@@ -32,7 +32,7 @@ import dagger.hilt.android.EntryPointAccessors
  *
  * @param VB ViewBinding 类型
  * @param VM ViewModel 类型
- * @author 小龙虾
+ * @author Cheng
  */
 abstract class BaseFragment<VB : ViewBinding, VM : BaseViewModel<IBaseView>> : Fragment(), IBaseView {
 

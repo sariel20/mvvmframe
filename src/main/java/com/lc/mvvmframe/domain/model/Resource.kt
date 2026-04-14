@@ -9,7 +9,7 @@ package com.lc.mvvmframe.domain.model
  * - Loading: 请求进行中
  *
  * @param T 数据类型
- * @author 小龙虾
+ * @author Cheng
  */
 sealed class Resource<out T> {
     /**

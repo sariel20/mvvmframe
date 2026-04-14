@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
  * 定义用户数据的本地 CRUD 操作
  * 使用 Room 注解声明 SQL 语句
  *
- * @author 小龙虾
+ * @author Cheng
  */
 @Dao
 interface UserDao {

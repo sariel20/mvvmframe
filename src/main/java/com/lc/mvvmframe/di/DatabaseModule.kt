@@ -18,7 +18,7 @@ import javax.inject.Singleton
  * - AppDatabase
  * - UserDao
  *
- * @author 小龙虾
+ * @author Cheng
  */
 @Module
 @InstallIn(SingletonComponent::class)

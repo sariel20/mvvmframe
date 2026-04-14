@@ -14,7 +14,7 @@ import javax.inject.Singleton
  * 使用 @Binds 注解绑定接口到实现类
  * Hilt 会自动注入 UserRepositoryImpl 到 UserRepository
  *
- * @author 小龙虾
+ * @author Cheng
  */
 @Module
 @InstallIn(SingletonComponent::class)

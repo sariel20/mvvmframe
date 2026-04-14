@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap
  * - 通用错误处理
  *
  * @param V View 类型
- * @author 小龙虾
+ * @author Cheng
  */
 abstract class BaseViewModel<V : IBaseView> : ViewModel() {
 

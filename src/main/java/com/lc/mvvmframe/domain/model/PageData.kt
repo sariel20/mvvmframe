@@ -14,7 +14,7 @@ import com.google.gson.annotations.SerializedName
  * }
  *
  * @param T 列表数据类型
- * @author 小龙虾
+ * @author Cheng
  */
 data class PageData<T>(
     /**

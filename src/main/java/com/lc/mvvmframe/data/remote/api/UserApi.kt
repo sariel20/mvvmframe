@@ -10,7 +10,7 @@ import retrofit2.http.*
  * 定义所有用户相关的网络请求接口
  * 使用 Retrofit 注解声明 HTTP 请求
  *
- * @author 小龙虾
+ * @author Cheng
  */
 interface UserApi {
 

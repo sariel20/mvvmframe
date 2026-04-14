@@ -9,7 +9,7 @@ import androidx.core.content.ContextCompat
  *
  * 解决 Toast 重复显示、切换语言后显示旧语言等问题
  *
- * @author 小龙虾
+ * @author Cheng
  */
 object ToastUtils {
 

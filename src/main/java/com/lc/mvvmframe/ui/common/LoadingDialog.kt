@@ -16,7 +16,7 @@ import java.lang.ref.WeakReference
  * 用于显示请求等待时的加载状态
  * 使用 LifecycleObserver 自动管理生命周期，避免内存泄漏
  *
- * @author 小龙虾
+ * @author Cheng
  */
 class LoadingDialog(context: Context) : LifecycleEventObserver {
 

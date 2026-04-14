@@ -24,9 +24,11 @@ repositories {
 
 ```
 dependencies {
-    implementation("com.github.sariel20:mvvmframe:v1.0.0")
+    implementation("com.github.sariel20:mvvmframe:v1.0.2")
 }
 ```
+
+**当前发布版本：1.0.2**（与 Git 标签 `v1.0.2` 一致）。推送标签后 JitPack 会自动构建，可在 [JitPack：mvvmframe](https://jitpack.io/#sariel20/mvvmframe/v1.0.2) 查看构建日志与依赖坐标。
 
 ## 技术栈
 

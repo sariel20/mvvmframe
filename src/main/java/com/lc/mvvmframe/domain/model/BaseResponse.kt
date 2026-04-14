@@ -13,7 +13,7 @@ import com.google.gson.annotations.SerializedName
  * }
  *
  * @param T 数据类型
- * @author 小龙虾
+ * @author Cheng
  */
 data class BaseResponse<T>(
     /**

@@ -19,7 +19,7 @@ import javax.inject.Singleton
  *
  * 使用 Hilt @Singleton 确保全局单例
  *
- * @author 小龙虾
+ * @author Cheng
  */
 @Singleton
 class PreferencesManager @Inject constructor(

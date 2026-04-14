@@ -10,7 +10,7 @@ import androidx.room.TypeConverters
  * 声明应用中所有的 DAO 和实体类
  * 使用 @Database 注解标记
  *
- * @author 小龙虾
+ * @author Cheng
  */
 @Database(
     entities = [

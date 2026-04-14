@@ -8,7 +8,7 @@ package com.lc.mvvmframe.ui.base
  * - 显示错误信息
  * - 显示空状态
  *
- * @author 小龙虾
+ * @author Cheng
  */
 interface IBaseView {
 
