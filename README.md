@@ -8,27 +8,76 @@ Android MVVM 快速开发框架库（Kotlin），基于 **Jetpack（ViewModel + 
 
 ## **📥 安装**
 
-### **1. 添加 JitPack 仓库**
+支持 **远程依赖（推荐）** 与 **本地依赖** 两种方式，任选其一即可。
 
-在项目根目录的 `build.gradle` 中添加：
+---
 
-```
+### **方式一：远程依赖（JitPack）**
+
+从 GitHub 经 JitPack 拉取已发布的 AAR，无需把源码放进业务工程。
+
+**1）添加 JitPack 仓库**
+
+在工程根目录的 `settings.gradle.kts`（或顶层 `build.gradle.kts` 的 `dependencyResolutionManagement` / `allprojects`）中确保包含：
+
+```kotlin
 repositories {
     maven { url = uri("https://jitpack.io") }
+    google()
+    mavenCentral()
 }
 ```
 
-### **2. 添加框架依赖**
+**2）在 App 模块中声明依赖**
 
-在模块的 `build.gradle` 中添加：
-
-```
+```kotlin
 dependencies {
     implementation("com.github.sariel20:mvvmframe:v1.0.2")
 }
 ```
 
-**当前发布版本：1.0.2**（与 Git 标签 `v1.0.2` 一致）。推送标签后 JitPack 会自动构建，可在 [JitPack：mvvmframe](https://jitpack.io/#sariel20/mvvmframe/v1.0.2) 查看构建日志与依赖坐标。
+---
+
+### **方式二：本地依赖（源码模块）**
+
+将本仓库作为 **Gradle 子模块** 引入，便于调试框架或二次修改。
+
+**1）获取源码**
+
+将 `mvvmframe` 目录放到你的工程旁（或作为子目录克隆），例如：
+
+```text
+YourWorkspace/
+├── MyApp/                 # 你的 App 工程
+└── mvvmframe/             # 本框架仓库根目录（与 MyApp 平级或按你习惯放置）
+```
+
+**2）在 App 工程的 `settings.gradle.kts` 中引入模块**
+
+路径按你实际放置位置修改 `file(...)`：
+
+```kotlin
+rootProject.name = "MyApp"
+include(":app")
+
+include(":mvvmframe")
+project(":mvvmframe").projectDir = file("../mvvmframe")   // 与 app 平级时示例；若在工程内子目录则改为 file("mvvmframe")
+```
+
+若框架已放在 App 工程根目录下的 `mvvmframe/` 子文件夹，可写为：
+
+```kotlin
+include(":mvvmframe")
+project(":mvvmframe").projectDir = file("mvvmframe")
+```
+
+**3）在 App 模块 `build.gradle.kts` 中依赖本地模块**
+
+```kotlin
+dependencies {
+    implementation(project(":mvvmframe"))
+}
+```
 
 ## 技术栈
 
@@ -281,8 +330,6 @@ class MyRepositoryImpl @Inject constructor(
     }
 }
 ```
-
-
 
 ---
 
